@@ -253,10 +253,10 @@ def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, 
 
 class OdooConnection:
     def __init__(self):
-        self.url = st.secrets["odoo"]["url"]
-        self.db = st.secrets["odoo"]["db"]
-        self.username = st.secrets["odoo"]["username"]
-        self.password = st.secrets["odoo"]["password"]
+        self.url = 'https://blackdogpanama.odoo.com'
+        self.db = 'dev-psdc-blackdogpanama-prod-3782039'
+        self.username = 'mercadeo@blackdogpanama.com'
+        self.password = 'Emanuel1010.'
         self.uid = None
         self.models = None
         self.connect()
