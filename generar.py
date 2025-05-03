@@ -5,6 +5,7 @@ import xmlrpc.client
 import pandas as pd
 import time
 import pickle
+import streamlit as st
 from pathlib import Path
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -252,10 +253,10 @@ def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, 
 
 class OdooConnection:
     def __init__(self):
-        self.url = 'https://blackdogpanama.odoo.com'
-        self.db = 'dev-psdc-blackdogpanama-prod-3782039'
-        self.username = 'mercadeo@blackdogpanama.com'
-        self.password = 'Emanuel1010.'
+        self.url = st.secrets["odoo"]["url"]
+        self.db = st.secrets["odoo"]["db"]
+        self.username = st.secrets["odoo"]["username"]
+        self.password = st.secrets["odoo"]["password"]
         self.uid = None
         self.models = None
         self.connect()
@@ -280,7 +281,7 @@ class OdooConnection:
         except Exception as e:
             print(f"❌ Error ejecutando {method} en {model}: {e}")
             raise
-
+            
 def cargar_datos_reposicion():
     odoo = OdooConnection()
     print("\n📊 Buscando órdenes de reposición en estado borrador...")
