@@ -178,7 +178,7 @@ if st.session_state['run']:
 st.markdown(
     "<hr>"
     "<div style='text-align:center; color:#FAB803; font-size:0.95em;'>"
-    "Desarrollado para Black Dog Panamá &copy; 2024"
+    "Desarrollado para Black Dog Panamá &copy; 2025"
     "</div>",
     unsafe_allow_html=True
 )
