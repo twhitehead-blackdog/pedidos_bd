@@ -4,16 +4,16 @@ import zipfile
 import base64
 import json
 from datetime import datetime, timedelta
-from modules.pedidos import main as procesar_pedidos_odoo
+from generar import procesar_pedidos_odoo
 
-# Configuración de la página
+# Configuraci贸n de la p谩gina
 st.set_page_config(
     page_title="Pedidos Sugeridos Black Dog",
     page_icon="favicon.png",
     layout="centered"
 )
 
-# Usuarios válidos desde secrets.toml
+# Usuarios v谩lidos desde secrets.toml
 USUARIOS_VALIDOS = st.secrets["usuarios"]
 
 # ---------- ESTILOS CSS ----------
@@ -212,7 +212,7 @@ def mostrar_historial():
                     zip_b64 = base64.b64encode(fzip.read()).decode()
                     st.markdown(f"""
                         <div class='history-box'>
-                            <b>📦 Último ZIP generado:</b><br>
+                            <b>馃搨 脷ltimo ZIP generado:</b><br>
                             <ul style='color:#cccccc; list-style-position: inside;'>
                                 <li><b>Archivo:</b> {hist['archivo']}</li>
                                 <li><b>Generado por:</b> {hist['usuario']}</li>
@@ -246,7 +246,7 @@ def mostrar_tiempo_sesion():
         if minutos_restantes > 0:
             st.markdown(f"""
                 <div class='session-info'>
-                    Tiempo restante de sesión: {minutos_restantes} minutos
+                    Tiempo restante de sesi贸n: {minutos_restantes} minutos
                 </div>
             """, unsafe_allow_html=True)
 
@@ -254,20 +254,20 @@ def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
         st.session_state['confirmar_cierre'] = False
 
-    # Contenedor para el botón de cierre de sesión
+    # Contenedor para el bot贸n de cierre de sesi贸n
     st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
     if not st.session_state['confirmar_cierre']:
-        if st.button("Cerrar sesión", key="logout_button"):
+        if st.button("Cerrar sesi贸n", key="logout_button"):
             st.session_state['confirmar_cierre'] = True
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Mostrar confirmación si es necesario
+    # Mostrar confirmaci贸n si es necesario
     if st.session_state['confirmar_cierre']:
-        st.warning("¿Estás seguro de que deseas cerrar sesión?")
+        st.warning("驴Est谩s seguro de que deseas cerrar sesi贸n?")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Sí, cerrar sesión", key="confirm_logout"):
+            if st.button("S铆, cerrar sesi贸n", key="confirm_logout"):
                 st.session_state.clear()
                 st.rerun()
         with col2:
@@ -275,7 +275,7 @@ def cerrar_sesion():
                 st.session_state['confirmar_cierre'] = False
                 st.rerun()
 
-# ---------- INICIALIZACIÓN DE ESTADO ----------
+# ---------- INICIALIZACI脫N DE ESTADO ----------
 if 'logueado' not in st.session_state:
     st.session_state['logueado'] = False
 if 'login_time' not in st.session_state:
@@ -301,23 +301,23 @@ if not st.session_state.get('logueado', False) or (
 
     with st.form("login_form"):
         usuario = st.text_input("Usuario")
-        contrasena = st.text_input("Contraseña", type="password")
-        submitted = st.form_submit_button("Iniciar sesión")
+        contrase帽a = st.text_input("Contrase帽a", type="password")
+        submitted = st.form_submit_button("Iniciar sesi贸n")
 
         if submitted:
-            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contrasena:
+            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contrase帽a:
                 st.session_state['logueado'] = True
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
                 st.rerun()
             else:
-                st.error("Usuario o contraseña incorrectos")
+                st.error("Usuario o contrase帽a incorrectos")
     st.stop()
 
 # ---------- BARRA DE LOGOUT Y BIENVENIDA ----------
 st.markdown(
-    f"<div class='welcome-user'>👋 Bienvenido, {st.session_state['nombre_completo']}.</div>",
+    f"<div class='welcome-user'>馃憢 Bienvenido, {st.session_state['nombre_completo']}.</div>",
     unsafe_allow_html=True
 )
 cerrar_sesion()
@@ -330,7 +330,7 @@ st.markdown("<div class='subtitle'>Automatiza y descarga los pedidos sugeridos p
 
 mostrar_historial()
 
-# ---------- FLUJO DE GENERACIÓN DE PEDIDOS ----------
+# ---------- FLUJO DE GENERACI脫N DE PEDIDOS ----------
 if not st.session_state['confirmado'] and not st.session_state['run']:
     col1, col2, col3 = st.columns([1,1,1])
     with col2:
@@ -341,18 +341,18 @@ if not st.session_state['confirmado'] and not st.session_state['run']:
 elif st.session_state['confirmado'] and not st.session_state['run']:
     st.markdown("""
         <div class='confirmation-box'>
-            ¿Estás seguro de que deseas generar los pedidos?
+            驴Est谩s seguro de que deseas generar los pedidos?
         </div>
     """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("✅ Confirmar", key="confirm"):
+        if st.button("鉁?Confirmar", key="confirm"):
             st.session_state['run'] = True
             st.session_state['confirmado'] = False
             st.rerun()
     with col2:
-        if st.button("❌ Cancelar", key="cancel"):
+        if st.button("鉂?Cancelar", key="cancel"):
             st.session_state['confirmado'] = False
             st.rerun()
 
@@ -392,7 +392,7 @@ elif st.session_state['run']:
                 st.markdown(f"""
                     <div class='result-box'>
                         <div style='font-size: 1.6em; font-weight: bold; margin-bottom: 0.5em; color: #FAB803;'>
-                            ✅ Pedido generado correctamente
+                            鉁?Pedido generado correctamente
                         </div>
                         <div style='font-size: 1.1em; margin-bottom: 1em;'>
                             ZIP generado: <b>{os.path.basename(zip_path)}</b><br>
