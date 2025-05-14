@@ -4,16 +4,16 @@ import zipfile
 import base64
 import json
 from datetime import datetime, timedelta
-from generar import procesar_pedidos_odoo
+from modules.pedidos import main as procesar_pedidos_odoo
 
-# Configuraci贸n de la p谩gina
+# Configuración de la página
 st.set_page_config(
     page_title="Pedidos Sugeridos Black Dog",
     page_icon="favicon.png",
     layout="centered"
 )
 
-# Usuarios v谩lidos desde secrets.toml
+# Usuarios válidos desde secrets.toml
 USUARIOS_VALIDOS = st.secrets["usuarios"]
 
 # ---------- ESTILOS CSS ----------
@@ -212,7 +212,7 @@ def mostrar_historial():
                     zip_b64 = base64.b64encode(fzip.read()).decode()
                     st.markdown(f"""
                         <div class='history-box'>
-                            <b>馃搨 脷ltimo ZIP generado:</b><br>
+                            <b>📦 Último ZIP generado:</b><br>
                             <ul style='color:#cccccc; list-style-position: inside;'>
                                 <li><b>Archivo:</b> {hist['archivo']}</li>
                                 <li><b>Generado por:</b> {hist['usuario']}</li>
@@ -254,7 +254,7 @@ def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
         st.session_state['confirmar_cierre'] = False
 
-    # Contenedor para el bon de cierre de sesión
+    # Contenedor para el botón de cierre de sesión
     st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
     if not st.session_state['confirmar_cierre']:
         if st.button("Cerrar sesión", key="logout_button"):
@@ -264,7 +264,7 @@ def cerrar_sesion():
 
     # Mostrar confirmación si es necesario
     if st.session_state['confirmar_cierre']:
-        st.warning("驴Est谩s seguro de que deseas cerrar sesión?")
+        st.warning("¿Estás seguro de que deseas cerrar sesión?")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
@@ -275,7 +275,7 @@ def cerrar_sesion():
                 st.session_state['confirmar_cierre'] = False
                 st.rerun()
 
-# ---------- INICIALIZACI脫N DE ESTADO ----------
+# ---------- INICIALIZACIÓN DE ESTADO ----------
 if 'logueado' not in st.session_state:
     st.session_state['logueado'] = False
 if 'login_time' not in st.session_state:
@@ -301,11 +301,11 @@ if not st.session_state.get('logueado', False) or (
 
     with st.form("login_form"):
         usuario = st.text_input("Usuario")
-        contraseña = st.text_input("Contraseña", type="password")
+        contrasena = st.text_input("Contraseña", type="password")
         submitted = st.form_submit_button("Iniciar sesión")
 
         if submitted:
-            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contraseña:
+            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contrasena:
                 st.session_state['logueado'] = True
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
@@ -317,7 +317,7 @@ if not st.session_state.get('logueado', False) or (
 
 # ---------- BARRA DE LOGOUT Y BIENVENIDA ----------
 st.markdown(
-    f"<div class='welcome-user'>馃憢 Bienvenido, {st.session_state['nombre_completo']}.</div>",
+    f"<div class='welcome-user'>👋 Bienvenido, {st.session_state['nombre_completo']}.</div>",
     unsafe_allow_html=True
 )
 cerrar_sesion()
@@ -330,30 +330,30 @@ st.markdown("<div class='subtitle'>Automatiza y descarga los pedidos sugeridos p
 
 mostrar_historial()
 
-# ---------- FLUJO DE GENERACI脫N DE PEDIDOS ----------
-if not st.sion_state['confirmado'] and not st.sion_state['run']:
+# ---------- FLUJO DE GENERACIÓN DE PEDIDOS ----------
+if not st.session_state['confirmado'] and not st.session_state['run']:
     col1, col2, col3 = st.columns([1,1,1])
     with col2:
         if st.button("Generar Pedidos"):
-            st.sion_state['confirmado'] = True
+            st.session_state['confirmado'] = True
             st.rerun()
 
-elif st.sion_state['confirmado'] and not st.sion_state['run']:
+elif st.session_state['confirmado'] and not st.session_state['run']:
     st.markdown("""
         <div class='confirmation-box'>
-            驴Est谩s seguro de que deseas generar los pedidos?
+            ¿Estás seguro de que deseas generar los pedidos?
         </div>
     """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("鉁?Confirmar", key="confirm"):
-            st.sion_state['run'] = True
-            st.sion_state['confirmado'] = False
+        if st.button("✅ Confirmar", key="confirm"):
+            st.session_state['run'] = True
+            st.session_state['confirmado'] = False
             st.rerun()
     with col2:
-        if st.button("鉂?Cancelar", key="cancel"):
-            st.sion_state['confirmado'] = False
+        if st.button("❌ Cancelar", key="cancel"):
+            st.session_state['confirmado'] = False
             st.rerun()
 
 elif st.session_state['run']:
@@ -392,7 +392,7 @@ elif st.session_state['run']:
                 st.markdown(f"""
                     <div class='result-box'>
                         <div style='font-size: 1.6em; font-weight: bold; margin-bottom: 0.5em; color: #FAB803;'>
-                            鉁?Pedido generado correctamente
+                            ✅ Pedido generado correctamente
                         </div>
                         <div style='font-size: 1.1em; margin-bottom: 1em;'>
                             ZIP generado: <b>{os.path.basename(zip_path)}</b><br>
@@ -426,6 +426,6 @@ elif st.session_state['run']:
 st.markdown("""
     <hr>
     <div style='text-align:center; color:#FAB803; padding: 1em;'>
-        Desarrollado para Black Dog Panam谩 &copy; 2024
+        Desarrollado para Black Dog Panamá &copy; 2025
     </div>
 """, unsafe_allow_html=True)
