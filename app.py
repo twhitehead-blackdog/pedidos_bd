@@ -246,7 +246,7 @@ def mostrar_tiempo_sesion():
         if minutos_restantes > 0:
             st.markdown(f"""
                 <div class='session-info'>
-                    Tiempo restante de sesi贸n: {minutos_restantes} minutos
+                    Tiempo restante de sesión: {minutos_restantes} minutos
                 </div>
             """, unsafe_allow_html=True)
 
@@ -254,20 +254,20 @@ def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
         st.session_state['confirmar_cierre'] = False
 
-    # Contenedor para el bot贸n de cierre de sesi贸n
+    # Contenedor para el bon de cierre de sesión
     st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
     if not st.session_state['confirmar_cierre']:
-        if st.button("Cerrar sesi贸n", key="logout_button"):
+        if st.button("Cerrar sesión", key="logout_button"):
             st.session_state['confirmar_cierre'] = True
             st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Mostrar confirmaci贸n si es necesario
+    # Mostrar confirmación si es necesario
     if st.session_state['confirmar_cierre']:
-        st.warning("驴Est谩s seguro de que deseas cerrar sesi贸n?")
+        st.warning("驴Est谩s seguro de que deseas cerrar sesión?")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("S铆, cerrar sesi贸n", key="confirm_logout"):
+            if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
                 st.rerun()
         with col2:
@@ -301,18 +301,18 @@ if not st.session_state.get('logueado', False) or (
 
     with st.form("login_form"):
         usuario = st.text_input("Usuario")
-        contrase帽a = st.text_input("Contrase帽a", type="password")
-        submitted = st.form_submit_button("Iniciar sesi贸n")
+        contraseña = st.text_input("Contraseña", type="password")
+        submitted = st.form_submit_button("Iniciar sesión")
 
         if submitted:
-            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contrase帽a:
+            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contraseña:
                 st.session_state['logueado'] = True
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
                 st.rerun()
             else:
-                st.error("Usuario o contrase帽a incorrectos")
+                st.error("Usuario o contraseña incorrectos")
     st.stop()
 
 # ---------- BARRA DE LOGOUT Y BIENVENIDA ----------
@@ -331,14 +331,14 @@ st.markdown("<div class='subtitle'>Automatiza y descarga los pedidos sugeridos p
 mostrar_historial()
 
 # ---------- FLUJO DE GENERACI脫N DE PEDIDOS ----------
-if not st.session_state['confirmado'] and not st.session_state['run']:
+if not st.sion_state['confirmado'] and not st.sion_state['run']:
     col1, col2, col3 = st.columns([1,1,1])
     with col2:
         if st.button("Generar Pedidos"):
-            st.session_state['confirmado'] = True
+            st.sion_state['confirmado'] = True
             st.rerun()
 
-elif st.session_state['confirmado'] and not st.session_state['run']:
+elif st.sion_state['confirmado'] and not st.sion_state['run']:
     st.markdown("""
         <div class='confirmation-box'>
             驴Est谩s seguro de que deseas generar los pedidos?
@@ -348,12 +348,12 @@ elif st.session_state['confirmado'] and not st.session_state['run']:
     col1, col2 = st.columns(2)
     with col1:
         if st.button("鉁?Confirmar", key="confirm"):
-            st.session_state['run'] = True
-            st.session_state['confirmado'] = False
+            st.sion_state['run'] = True
+            st.sion_state['confirmado'] = False
             st.rerun()
     with col2:
         if st.button("鉂?Cancelar", key="cancel"):
-            st.session_state['confirmado'] = False
+            st.sion_state['confirmado'] = False
             st.rerun()
 
 elif st.session_state['run']:
