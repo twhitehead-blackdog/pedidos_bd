@@ -301,23 +301,23 @@ if not st.session_state.get('logueado', False) or (
 
     with st.form("login_form"):
         usuario = st.text_input("Usuario")
-        contrase帽a = st.text_input("Contrase帽a", type="password")
-        submitted = st.form_submit_button("Iniciar sesi贸n")
+        contrase帽a = st.text_input("Contraseña", type="password")
+        submitted = st.form_submit_button("Iniciar sesión")
 
         if submitted:
-            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contrase帽a:
+            if usuario in USUARIOS_VALIDOS and USUARIOS_VALIDOS[usuario]["password"] == contraseña:
                 st.session_state['logueado'] = True
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
                 st.rerun()
             else:
-                st.error("Usuario o contrase帽a incorrectos")
+                st.error("Usuario o contraseña incorrectos")
     st.stop()
 
 # ---------- BARRA DE LOGOUT Y BIENVENIDA ----------
 st.markdown(
-    f"<div class='welcome-user'>馃憢 Bienvenido, {st.session_state['nombre_completo']}.</div>",
+    f"<div class='welcome-user'>Bienvenido, {st.session_state['nombre_completo']}.</div>",
     unsafe_allow_html=True
 )
 cerrar_sesion()
@@ -426,6 +426,6 @@ elif st.session_state['run']:
 st.markdown("""
     <hr>
     <div style='text-align:center; color:#FAB803; padding: 1em;'>
-        Desarrollado para Black Dog Panamá &copy; 2025
+        Desarrollado para Black Dog Panamá &copy; 2024
     </div>
 """, unsafe_allow_html=True)
