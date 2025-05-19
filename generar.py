@@ -26,8 +26,29 @@ TIENDAS_GRANDES = {"ocean mall", "calle 50", "albrook fields", "brisas del golf"
 TIENDAS_MEDIANAS = {"costa verde", "villa zaita", "condado del rey", "brisas norte", "versalles", "coco del mar"}
 TIENDAS_CHICAS = {"plaza emporio"}
 
+MULTIPLICADORES = {
+    "global_agresividad": 1.8,
+    "natural_greatness": 2.2,
+    "vacunas": 1.8,
+    "general": 1.5
+}
+
+MULTIPLICADORES_TAMANO = {
+    "pequeno": 1.4,
+    "mediano": 1.2,
+    "grande": 1.0
+}
+
 MINIMOS_ACCESORIOS = {
     "grande": {
+        "higiene/pampers": 12, "higiene/bolsas de pupu": 12, "higiene/shampoo": 8,
+        "higiene/topicos - cremas, perfume": 8, "higiene/pads": 12, "higiene/dental": 8,
+        "higiene/wipes": 8, "higiene/cepillos": 8, "higiene/otros": 8, "higiene/hogar": 5,
+        "higiene/gatos - arenero": 3, "bowls y feeders": 5, "juguetes": 8, "medias": 8,
+        "pecheras/correas/leashes": 5, "camas": 3, "kennel": 3, "bolsos": 3, "arena": 8,
+        "gimnasios y rascadores": 3, "carritos": 2, "default": 4
+    },
+    "mediana": {
         "higiene/pampers": 10, "higiene/bolsas de pupu": 10, "higiene/shampoo": 6,
         "higiene/topicos - cremas, perfume": 6, "higiene/pads": 10, "higiene/dental": 6,
         "higiene/wipes": 6, "higiene/cepillos": 6, "higiene/otros": 6, "higiene/hogar": 4,
@@ -35,25 +56,17 @@ MINIMOS_ACCESORIOS = {
         "pecheras/correas/leashes": 4, "camas": 2, "kennel": 2, "bolsos": 2, "arena": 6,
         "gimnasios y rascadores": 2, "carritos": 1, "default": 3
     },
-    "mediana": {
-        "higiene/pampers": 8, "higiene/bolsas de pupu": 8, "higiene/shampoo": 6,
-        "higiene/topicos - cremas, perfume": 6, "higiene/pads": 8, "higiene/dental": 6,
-        "higiene/wipes": 6, "higiene/cepillos": 6, "higiene/otros": 6, "higiene/hogar": 4,
-        "higiene/gatos - arenero": 2, "bowls y feeders": 4, "juguetes": 6, "medias": 6,
-        "pecheras/correas/leashes": 4, "camas": 2, "kennel": 2, "bolsos": 2, "arena": 6,
-        "gimnasios y rascadores": 2, "carritos": 1, "default": 3
-    },
     "chica": {
-        "higiene/pampers": 8, "higiene/bolsas de pupu": 8, "higiene/shampoo": 6,
-        "higiene/topicos - cremas, perfume": 6, "higiene/pads": 8, "higiene/dental": 6,
-        "higiene/wipes": 6, "higiene/cepillos": 6, "higiene/otros": 6, "higiene/hogar": 4,
-        "higiene/gatos - arenero": 2, "bowls y feeders": 4, "juguetes": 4, "medias": 6,
-        "pecheras/correas/leashes": 4, "camas": 1, "kennel": 1, "bolsos": 1, "arena": 6,
+        "higiene/pampers": 8, "higiene/bolsas de pupu": 8, "higiene/shampoo": 5,
+        "higiene/topicos - cremas, perfume": 5, "higiene/pads": 8, "higiene/dental": 5,
+        "higiene/wipes": 5, "higiene/cepillos": 5, "higiene/otros": 5, "higiene/hogar": 3,
+        "higiene/gatos - arenero": 1, "bowls y feeders": 3, "juguetes": 5, "medias": 5,
+        "pecheras/correas/leashes": 3, "camas": 1, "kennel": 1, "bolsos": 1, "arena": 5,
         "gimnasios y rascadores": 1, "carritos": 1, "default": 2
     }
 }
 
-COLUMNS_OUT = ["Código", "Referencia Interna", "Descripción", "Cantidad", "Categoría"]
+COLUMNS_OUT = ["Código", "Referencia Interna", "Descripción", "Cantidad", "Categoría", "Marca"]
 
 # ---------------------------------------------
 # FUNCIONES DE NEGOCIO
@@ -90,25 +103,28 @@ def limpiar_nombre_producto(nombre):
         nombre = nombre.replace("  ", " ")
     return nombre
 
-def crear_item_producto(product_info, cantidad, categoria_nombre, es_nuevo=False):
+def crear_item_producto(product_info, cantidad, categoria_nombre):
     return {
         "Código": product_info.get("barcode", ""),
         "Referencia Interna": product_info.get("default_code", ""),
         "Descripción": product_info.get("nombre_correcto", ""),
         "Cantidad": cantidad,
-        "Categoría": categoria_nombre
+        "Categoría": categoria_nombre,
+        "Marca": product_info.get("marca", "").lower()
     }
 
 def determinar_tipo_producto(categoria_nombre, nombre_producto):
     categoria = categoria_nombre.lower()
     nombre = nombre_producto.lower()
+    if any(palabra in nombre or palabra in categoria for palabra in EXCLUIR_PALABRAS):
+        return None
     if "insumo" in categoria or "gasto" in categoria:
         return "insumos"
     if "alimento" in categoria or "medicado" in categoria or "treat" in categoria:
         return "alimentos"
     elif "accesorio" in categoria:
         return "accesorios"
-    elif "medicamento" in categoria:
+    elif "medicamento" in categoria or "vacuna" in categoria or "vacunas" in categoria:
         return "medicamentos"
     return None
 
@@ -131,22 +147,23 @@ def es_producto_nuevo(product_info, stock_tienda):
 def es_producto_temporada(product_info):
     nombre = product_info.get("nombre_correcto", "").lower()
     categoria = product_info.get("categ_id", ["", ""])[1].lower()
-    if any(x in nombre for x in ["navidad", "xmas", "santa", "noel", "halloween", "bruja", "spooky", "terror"]):
+    palabras_temporada = ["navidad", "xmas", "santa", "noel", "halloween", "bruja", "spooky", "terror"]
+    if any(palabra in nombre for palabra in palabras_temporada):
         return True
-    if "navidad" in categoria or "halloween" in categoria:
+    if any(palabra in categoria for palabra in palabras_temporada):
         return True
     return False
 
 def mes_envio_temporada(product_info):
     nombre = product_info.get("nombre_correcto", "").lower()
     categoria = product_info.get("categ_id", ["", ""])[1].lower()
-    if "navidad" in nombre or "xmas" in nombre or "santa" in nombre or "noel" in nombre or "navidad" in categoria:
+    if any(x in nombre for x in ["navidad", "xmas", "santa", "noel"]) or "navidad" in categoria:
         return 11  # Noviembre
-    if "halloween" in nombre or "bruja" in nombre or "spooky" in nombre or "terror" in nombre or "halloween" in categoria:
+    if any(x in nombre for x in ["halloween", "bruja", "spooky", "terror"]) or "halloween" in categoria:
         return 9  # Octubre (enviar en septiembre)
     return None
 
-def sugerido_top3_6meses(linea):
+def sugerido_top2_6meses(linea):
     ventas = [
         linea.get('qty_month0', 0),
         linea.get('qty_month1', 0),
@@ -158,10 +175,10 @@ def sugerido_top3_6meses(linea):
     ventas = [float(v) for v in ventas if v is not None]
     if not ventas:
         return 0
-    top3 = sorted(ventas, reverse=True)[:3]
-    return int(round(sum(top3) / 3))
+    top2 = sorted(ventas, reverse=True)[:2]
+    return int(round(sum(top2) / 2))
 
-def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, subcategoria=None):
+def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, subcategoria=None, sugerido_odoo=0):
     tipo_tienda = "mediana"
     tienda_l = tienda.lower()
     if tienda_l in TIENDAS_GRANDES:
@@ -177,79 +194,56 @@ def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, 
     except:
         unidad_repos = 1
 
-    cantidad = int(forecast)
+    marca = product_info.get("marca", "").lower()
 
-    # 1. Medicamentos: mínimo 1, en unidad de compra
-    if tipo == "medicamentos":
-        if cantidad > 0:
-            pass  # El sugerido manda
-        else:
-            if stock_tienda < 1:
-                cantidad = 1 - stock_tienda
-            else:
-                cantidad = 0
-        if unidad_repos > 1 and cantidad % unidad_repos != 0:
-            cantidad = ((cantidad // unidad_repos) + 1) * unidad_repos
-        return cantidad
+    # Definir meses de stock según tipo
+    if tipo == "medicamentos" and ("vacuna" in (subcategoria or "").lower() or "vacunas" in (subcategoria or "").lower()):
+        meses_stock = 1.5
+    elif marca == "natural greatness":
+        meses_stock = 2
+    else:
+        meses_stock = 1
 
-    # 2. Latas de comida: múltiplos de 6
-    if tipo == "alimentos" and subcategoria and "lata" in subcategoria.lower():
-        if cantidad > 0:
-            if cantidad % 6 != 0:
-                cantidad = ((cantidad // 6) + 1) * 6
-        else:
-            if stock_tienda < 6:
-                cantidad = 6 - stock_tienda
-                if cantidad < 0:
-                    cantidad = 0
-            else:
-                cantidad = 0
-        return cantidad
+    # Cantidad base es el sugerido por Odoo
+    cantidad = sugerido_odoo
 
-    # 3. Juguetes Interactivos: mínimo 2
-    if tipo == "accesorios" and subcategoria and "juguete" in subcategoria.lower() and "interactivo" in subcategoria.lower():
-        if cantidad > 0:
-            pass
-        else:
-            if stock_tienda < 2:
-                cantidad = 2 - stock_tienda
-            else:
-                cantidad = 0
-        return cantidad
+    # Ajuste por tamaño
+    tamaño_producto = product_info.get("x_studio_tamano", "mediano").lower()
+    multiplicador_tamano = MULTIPLICADORES_TAMANO.get(tamaño_producto, 1.0)
 
-    # 4. Accesorios por tipo de tienda
+    cantidad = cantidad * multiplicador_tamano * MULTIPLICADORES["global_agresividad"]
+
+    # Mínimos por categoría y tienda para accesorios
     if tipo == "accesorios":
         sub = (subcategoria or "").lower()
         if "pechera" in sub or "correa" in sub or "leash" in sub:
             sub = "pecheras/correas/leashes"
         minimos = MINIMOS_ACCESORIOS.get(tipo_tienda, {})
-        minimo = minimos.get(sub, minimos.get("default", 2))
-        if cantidad > 0:
-            pass  # El sugerido manda
-        else:
-            if stock_tienda < minimo:
-                cantidad = minimo - stock_tienda
-            else:
-                cantidad = 0
-        if unidad_repos > 1 and cantidad % unidad_repos != 0:
-            cantidad = ((cantidad // unidad_repos) + 1) * unidad_repos
-        return cantidad
+        minimo = minimos.get(sub, minimos.get("default", 3))
+        if cantidad < minimo:
+            cantidad = minimo
 
-    # Para otros casos, redondear a múltiplo de unidad de compra
-    if cantidad > 0:
-        if unidad_repos > 1 and cantidad % unidad_repos != 0:
-            cantidad = ((cantidad // unidad_repos) + 1) * unidad_repos
-    else:
-        if stock_tienda < unidad_repos:
-            cantidad = unidad_repos - stock_tienda
-        else:
-            cantidad = 0
+    # Para medicamentos mínimo 1 unidad si no hay stock
+    if tipo == "medicamentos":
+        if cantidad < 1 and stock_tienda < 1:
+            cantidad = 1
+
+    # Para productos nuevos sin stock, mínimo 8 unidades
+    if es_producto_nuevo(product_info, stock_tienda):
+        cantidad = max(cantidad, 8)
+
+    # Límite máximo: 3 veces el forecast
+    cantidad = min(cantidad, forecast * 3)
+
+    # Redondear a múltiplos de unidad de compra
+    cantidad = int(round(cantidad))
+    if unidad_repos > 1 and cantidad % unidad_repos != 0:
+        cantidad = ((cantidad // unidad_repos) + 1) * unidad_repos
+
+    if cantidad < 0:
+        cantidad = 0
 
     return cantidad
-
-# ---------------------------------------------
-# CONEXIÓN ODOO Y UTILIDADES
-# ---------------------------------------------
 
 class OdooConnection:
     def __init__(self):
@@ -432,7 +426,9 @@ def get_product_info_in_batches(odoo, product_ids, batch_size=100):
                     'display_name',
                     'categ_id',
                     'create_date',
-                    'product_tmpl_id'
+                    'product_tmpl_id',
+                    'marca',
+                    'x_studio_tamano'
                 ],
                 'context': context_en}
             )
@@ -453,6 +449,12 @@ def get_product_info_in_batches(odoo, product_ids, batch_size=100):
                 else:
                     product['nombre_correcto'] = limpiar_nombre_producto(product.get('name', ''))
                     product['x_studio_unidad_de_reposicin'] = 1
+
+                if 'marca' not in product:
+                    product['marca'] = ""
+
+                if 'x_studio_tamano' not in product:
+                    product['x_studio_tamano'] = "mediano"
 
                 products_info[product['id']] = product
 
@@ -484,7 +486,6 @@ def escribir_log(log_path, agrupado, estadisticas_tiendas, productos_nuevos, pro
         f.write(f"LOG DE PEDIDOS SUGERIDOS - {datetime.now()}\n")
         f.write("=" * 80 + "\n\n")
 
-        # Productos nuevos agregados
         f.write("🆕 PRODUCTOS NUEVOS AGREGADOS\n")
         f.write("-" * 50 + "\n")
         for producto in productos_nuevos:
@@ -492,7 +493,6 @@ def escribir_log(log_path, agrupado, estadisticas_tiendas, productos_nuevos, pro
 
         f.write("\n" + "=" * 80 + "\n\n")
 
-        # Totales por tienda
         f.write("📋 DETALLE DE PRODUCTOS ENVIADOS POR TIENDA\n")
         f.write("-" * 50 + "\n")
         for ruta, tiendas in agrupado.items():
@@ -506,7 +506,6 @@ def escribir_log(log_path, agrupado, estadisticas_tiendas, productos_nuevos, pro
 
         f.write("\n" + "=" * 80 + "\n\n")
 
-        # Productos con qty_to_order = 0 pero recomendados
         f.write("❗ PRODUCTOS NO ORDENADOS MANUALMENTE (qty_to_order = 0 pero recomendados)\n")
         f.write("-" * 50 + "\n")
         for tienda, productos in sorted(productos_con_qty_to_order.items()):
@@ -515,27 +514,20 @@ def escribir_log(log_path, agrupado, estadisticas_tiendas, productos_nuevos, pro
                 for prod in productos:
                     f.write(f"• {prod['nombre']} - Cantidad Recomendada: {prod['cantidad_recomendada']}\n")
 
-# ---------------------------------------------
-# PROCESAMIENTO PRINCIPAL
-# ---------------------------------------------
-
 def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
     print("🚀 Iniciando proceso de pedidos sugeridos...")
     os.makedirs(output_dir, exist_ok=True)
 
-    # Cargar datos
     odoo, all_lines, all_product_ids = cargar_datos_reposicion()
     print(f"🔎 Consultando información de {len(all_product_ids)} productos únicos...")
     product_dict = get_product_info_with_cache(odoo, all_product_ids)
 
-    # Inicializar estructuras
     agrupado = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     masters = defaultdict(lambda: defaultdict(list))
     estadisticas_tiendas = defaultdict(lambda: defaultdict(int))
     productos_con_qty_to_order = defaultdict(list)
     productos_nuevos = []
 
-    # Ley del rico y del pobre y reglas de negocio
     print("\n⚖️ Aplicando reglas de negocio y control de stock...")
     lineas_por_producto = defaultdict(list)
     for line in all_lines:
@@ -553,28 +545,9 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
         if not tipo:
             continue
 
-        # 1. Productos de temporada
         if es_producto_temporada(product_info):
-            mes_envio = mes_envio_temporada(product_info)
-            mes_actual = datetime.now().month
-            if mes_envio and mes_actual == mes_envio:
-                stock_bodega = int(lineas[0].get('qty_in_wh', 0) or 0)
-                tiendas_activas = [l['shop_pos_id'][1].strip().lower() for l in lineas]
-                if len(tiendas_activas) > 0 and stock_bodega > 0:
-                    cantidad_por_tienda = stock_bodega // len(tiendas_activas)
-                    if cantidad_por_tienda > 0:
-                        for l in lineas:
-                            tienda = l['shop_pos_id'][1].strip().lower()
-                            item = crear_item_producto(product_info, cantidad_por_tienda, categoria_nombre)
-                            ruta = obtener_ruta(tienda)
-                            agrupado[ruta][tienda][tipo].append(item)
-                            if tipo in ["alimentos", "accesorios"]:
-                                masters[ruta][tipo].append(item)
-                            estadisticas_tiendas[tienda][tipo] += cantidad_por_tienda
-                    # No agregar más líneas para este producto
-                continue
+            continue
 
-        # 2. Control de stock: no sobrepasar stock de bodega, priorizar tiendas con mejores ventas
         total_solicitado = sum(
             float(l.get('qty_to_order') or l.get('qty_to_order_recommend') or 0)
             for l in lineas
@@ -583,21 +556,17 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
         if stock_bodega <= 0 or total_solicitado <= 0:
             continue
 
-        # Ordenar líneas por ventas históricas (total_avg) descendente
         lineas.sort(key=lambda l: float(l.get('total_avg') or 0), reverse=True)
         disponible = int(stock_bodega)
         for l in lineas:
             tienda = l['shop_pos_id'][1].strip().lower()
             stock_tienda = int(l.get('qty_to_hand') or 0)
-
-            # Sugerido Odoo y sugerido top 3 meses
             sugerido_odoo = int(l.get('qty_to_order') or l.get('qty_to_order_recommend') or 0)
-            sugerido_top3 = sugerido_top3_6meses(l)
-            forecast = max(sugerido_odoo, sugerido_top3)
+            sugerido_top2 = sugerido_top2_6meses(l)
+            forecast = max(sugerido_odoo, sugerido_top2)
 
-            # 3. Productos nuevos
             if es_producto_nuevo(product_info, stock_tienda):
-                cantidad_final = 5
+                cantidad_final = max(8, aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, categoria_nombre, sugerido_odoo))
                 productos_nuevos.append(crear_item_producto(product_info, cantidad_final, categoria_nombre))
             else:
                 cantidad_final = aplicar_reglas_cantidad(
@@ -606,15 +575,12 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
                     stock_tienda=stock_tienda,
                     tienda=tienda,
                     tipo=tipo,
-                    subcategoria=categoria_nombre
+                    subcategoria=categoria_nombre,
+                    sugerido_odoo=sugerido_odoo
                 )
 
-            # No sobrepasar stock de bodega
-            if cantidad_final > disponible:
-                cantidad_final = disponible
             if cantidad_final <= 0:
                 continue
-            disponible -= cantidad_final
 
             item = crear_item_producto(product_info, cantidad_final, categoria_nombre)
             ruta = obtener_ruta(tienda)
@@ -623,7 +589,6 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
                 masters[ruta][tipo].append(item)
             estadisticas_tiendas[tienda][tipo] += cantidad_final
 
-            # Seguimiento para log
             qty_to_order = float(l.get('qty_to_order', 0) or 0)
             qty_to_order_recommend = float(l.get('qty_to_order_recommend', 0) or 0)
             if qty_to_order == 0 and qty_to_order_recommend > 0:
@@ -632,10 +597,6 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
                     'cantidad_recomendada': qty_to_order_recommend
                 })
 
-            if disponible <= 0:
-                break  # Ya no hay más stock para repartir
-
-    # Generar archivos por tienda
     secuencia_global = get_next_global_sequence()
     print(f"\n🗂️ Secuencia global para esta ejecución: {secuencia_global}")
 
@@ -654,7 +615,6 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
                     exportar_excel_pedido(df, os.path.join(carpeta_tienda, nombre_archivo))
                     print(f"    └─ {nombre_archivo} ({len(df)} productos)")
 
-    # Generar archivos MASTER por ruta SOLO para alimentos y accesorios
     for ruta, tipos in masters.items():
         ruta_dir = os.path.join(output_dir, f"{ruta}_PEDIDO_{secuencia_global}")
         os.makedirs(ruta_dir, exist_ok=True)
@@ -668,7 +628,6 @@ def procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos"):
                 exportar_excel_pedido(df_master, master_path)
                 print(f"  📘 {master_filename} ({len(df_master)} productos únicos)")
 
-    # Generar log
     log_path = os.path.join(output_dir, f"log_pedidos_{secuencia_global}.txt")
     escribir_log(
         log_path,
