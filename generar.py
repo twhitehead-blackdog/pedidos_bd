@@ -110,7 +110,7 @@ def crear_item_producto(product_info, cantidad, categoria_nombre):
         "Descripción": product_info.get("nombre_correcto", ""),
         "Cantidad": cantidad,
         "Categoría": categoria_nombre,
-        "Marca": product_info.get("marca", "").lower()
+        "": product_info.get("", "").lower()
     }
 
 def determinar_tipo_producto(categoria_nombre, nombre_producto):
@@ -194,7 +194,7 @@ def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, 
     except:
         unidad_repos = 1
 
-    marca = product_info.get("marca", "").lower()
+     = product_info.get("marca", "").lower()
 
     # Definir meses de stock según tipo
     if tipo == "medicamentos" and ("vacuna" in (subcategoria or "").lower() or "vacunas" in (subcategoria or "").lower()):
@@ -426,9 +426,7 @@ def get_product_info_in_batches(odoo, product_ids, batch_size=100):
                     'display_name',
                     'categ_id',
                     'create_date',
-                    'product_tmpl_id',
-                    'marca',
-                    'x_studio_tamano'
+                    'product_tmpl_id'
                 ],
                 'context': context_en}
             )
