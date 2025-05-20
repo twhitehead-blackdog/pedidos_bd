@@ -110,7 +110,7 @@ def crear_item_producto(product_info, cantidad, categoria_nombre):
         "Descripción": product_info.get("nombre_correcto", ""),
         "Cantidad": cantidad,
         "Categoría": categoria_nombre,
-        "": product_info.get("", "").lower()
+        "Marca": product_info.get("marca", "").lower()
     }
 
 def determinar_tipo_producto(categoria_nombre, nombre_producto):
@@ -194,7 +194,7 @@ def aplicar_reglas_cantidad(product_info, forecast, stock_tienda, tienda, tipo, 
     except:
         unidad_repos = 1
 
-     = product_info.get("marca", "").lower()
+    marca = product_info.get("marca", "").lower()
 
     # Definir meses de stock según tipo
     if tipo == "medicamentos" and ("vacuna" in (subcategoria or "").lower() or "vacunas" in (subcategoria or "").lower()):
