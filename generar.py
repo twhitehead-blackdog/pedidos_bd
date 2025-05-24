@@ -28,32 +28,32 @@ TIENDAS_CHICAS = {"plaza emporio"}
 
 MULTIPLICADORES = {
     "global_agresividad": 1.0,
-    "natural_greatness": 2.0,
-    "vacunas": 1.5,
+    "natural_greatness": 1.0,
+    "vacunas": 1.0,
     "general": 1.0
 }
 
 # Multiplicadores por categoría según tamaño de tienda
 MULTIPLICADORES_POR_CATEGORIA = {
     "grande": {
-        "alimentos": 1.4,
-        "accesorios": 1.1,
-        "medicamentos": 1.3,
-        "otros": 1.1,
-        "insumos": 1.0
+        "alimentos": 0.5,
+        "accesorios": 0.5,
+        "medicamentos": 0.5,
+        "otros": 0.5,
+        "insumos": 0.5
     },
     "mediana": {
-        "alimentos": 1.1 ,
-        "accesorios": 1.0,
-        "medicamentos": 1.0,
-        "otros": 1.0,
-        "insumos": 1.0
+        "alimentos": 0.5 ,
+        "accesorios": 0.5,
+        "medicamentos": 0.5,
+        "otros": 0.5,
+        "insumos": 0.5
     },
     "chica": {
-        "alimentos": 0.8,
-        "accesorios": 0.7,
-        "medicamentos": 0.8,
-        "otros": 0.9,
+        "alimentos": 0.4,
+        "accesorios": 0.4,
+        "medicamentos": 0.4,
+        "otros": 0.4,
         "insumos": 1.0
     }
 }
@@ -108,7 +108,7 @@ SUBCATEGORIAS_MINIMO_1 = [
 ]
 
 NOMBRE_BOLSAS = "BOLSAS BLACK DOG (UNIDAD)"
-CANTIDAD_BOLSAS = 50
+CANTIDAD_BOLSAS = 0
 
 # Categorías a excluir de la generación de archivos
 CATEGORIAS_EXCLUIR = ["insumos", "otros"]
