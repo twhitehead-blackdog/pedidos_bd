@@ -27,23 +27,23 @@ TIENDAS_MEDIANAS = {"costa verde", "villa zaita", "condado del rey", "brisas nor
 TIENDAS_CHICAS = {"plaza emporio"}
 
 MULTIPLICADORES = {
-    "global_agresividad": 1.0,
+    "global_agresividad": 0.9,
     "natural_greatness": 1.1,
     "vacunas": 1.0,
-    "general": 1.0
+    "general": 0.9
 }
 
 # Multiplicadores por categoría según tamaño de tienda
 MULTIPLICADORES_POR_CATEGORIA = {
     "grande": {
-        "alimentos": 0.6,
-        "accesorios": 0.6,
+        "alimentos": 0.4,
+        "accesorios": 0.4,
         "medicamentos": 0.5,
         "otros": 0.5,
         "insumos": 0.5
     },
     "mediana": {
-        "alimentos": 0.6 ,
+        "alimentos": 0.4 ,
         "accesorios": 0.6,
         "medicamentos": 0.5,
         "otros": 0.5,
