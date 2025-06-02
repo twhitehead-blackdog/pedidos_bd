@@ -13,8 +13,23 @@ st.set_page_config(
     layout="centered"
 )
 
+CONFIG_PATH = "config_ajustes.json"
+
 # Usuarios válidos desde secrets.toml
 USUARIOS_VALIDOS = st.secrets["usuarios"]
+
+# ---------- FUNCIONES DE CONFIGURACIÓN ----------
+
+def cargar_configuracion(path=CONFIG_PATH):
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        return {}
+
+def guardar_configuracion(config, path=CONFIG_PATH):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False, indent=2)
 
 # ---------- ESTILOS CSS ----------
 st.markdown("""
@@ -254,26 +269,24 @@ def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
         st.session_state['confirmar_cierre'] = False
 
-    # Contenedor para el botón de cierre de sesión
     st.markdown("<div class='logout-container'>", unsafe_allow_html=True)
     if not st.session_state['confirmar_cierre']:
         if st.button("Cerrar sesión", key="logout_button"):
             st.session_state['confirmar_cierre'] = True
-            st.rerun()
+            st.experimental_rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # Mostrar confirmación si es necesario
     if st.session_state['confirmar_cierre']:
         st.warning("¿Estás seguro de que deseas cerrar sesión?")
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
-                st.rerun()
+                st.experimental_rerun()
         with col2:
             if st.button("No, cancelar", key="cancel_logout"):
                 st.session_state['confirmar_cierre'] = False
-                st.rerun()
+                st.experimental_rerun()
 
 # ---------- INICIALIZACIÓN DE ESTADO ----------
 if 'logueado' not in st.session_state:
@@ -288,6 +301,8 @@ if 'usuario' not in st.session_state:
     st.session_state['usuario'] = None
 if 'nombre_completo' not in st.session_state:
     st.session_state['nombre_completo'] = None
+if 'config' not in st.session_state:
+    st.session_state['config'] = cargar_configuracion()
 
 # ---------- LOGIN ----------
 if not st.session_state.get('logueado', False) or (
@@ -310,7 +325,7 @@ if not st.session_state.get('logueado', False) or (
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
-                st.rerun()
+                st.experimental_rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
     st.stop()
@@ -322,6 +337,46 @@ st.markdown(
 )
 cerrar_sesion()
 mostrar_tiempo_sesion()
+
+# ---------- CONFIGURACIÓN EDITABLE EN SIDEBAR ----------
+st.sidebar.header("Configuración de Pedidos")
+
+meses_general = st.sidebar.number_input(
+    "Meses inventario general",
+    min_value=0.1, max_value=12.0,
+    value=st.session_state.config.get("meses_inventario", {}).get("general", 1.0),
+    step=0.1
+)
+
+categorias_json = json.dumps(st.session_state.config.get("meses_inventario", {}).get("categorias", {}), indent=2)
+categorias_edit = st.sidebar.text_area("Meses inventario por categoría (JSON)", categorias_json, height=200)
+
+minimos_alimentos_json = json.dumps(st.session_state.config.get("minimos_alimentos", {}), indent=2)
+minimos_alimentos_edit = st.sidebar.text_area("Mínimos alimentos (JSON)", minimos_alimentos_json, height=150)
+
+minimos_accesorios_json = json.dumps(st.session_state.config.get("minimos_accesorios", {}), indent=2)
+minimos_accesorios_edit = st.sidebar.text_area("Mínimos accesorios (JSON)", minimos_accesorios_json, height=300)
+
+if st.sidebar.button("Guardar configuración"):
+    try:
+        categorias_dict = json.loads(categorias_edit)
+        minimos_alimentos_dict = json.loads(minimos_alimentos_edit)
+        minimos_accesorios_dict = json.loads(minimos_accesorios_edit)
+
+        nueva_config = {
+            "meses_inventario": {
+                "general": meses_general,
+                "categorias": categorias_dict
+            },
+            "minimos_alimentos": minimos_alimentos_dict,
+            "minimos_accesorios": minimos_accesorios_dict
+        }
+
+        st.session_state.config = nueva_config
+        guardar_configuracion(nueva_config)
+        st.sidebar.success("Configuración guardada correctamente.")
+    except Exception as e:
+        st.sidebar.error(f"Error guardando configuración: {e}")
 
 # ---------- HOME PRINCIPAL ----------
 show_centered_logo("logo.png")
@@ -336,7 +391,7 @@ if not st.session_state['confirmado'] and not st.session_state['run']:
     with col2:
         if st.button("Generar Pedidos"):
             st.session_state['confirmado'] = True
-            st.rerun()
+            st.experimental_rerun()
 
 elif st.session_state['confirmado'] and not st.session_state['run']:
     st.markdown("""
@@ -350,82 +405,125 @@ elif st.session_state['confirmado'] and not st.session_state['run']:
         if st.button("✅ Confirmar", key="confirm"):
             st.session_state['run'] = True
             st.session_state['confirmado'] = False
-            st.rerun()
+            st.experimental_rerun()
     with col2:
         if st.button("❌ Cancelar", key="cancel"):
             st.session_state['confirmado'] = False
-            st.rerun()
+            st.experimental_rerun()
 
 elif st.session_state['run']:
     try:
-        # Spinner centrado usando columnas
-        col1, col2, col3 = st.columns([1,2,1])
-        with col2:
-            with st.spinner("Generando pedidos sugeridos..."):
-                procesar_pedidos_odoo()
+        config = st.session_state.get("config")
+        if config is None:
+            st.error("No hay configuración cargada. Por favor, carga o guarda la configuración.")
+            st.session_state['run'] = False
+        else:
+            meses_inventario = config.get("meses_inventario", {}).get("general", 1)
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                with st.spinner("Generando pedidos sugeridos..."):
+                    procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos", meses_inventario=meses_inventario, config=config)
 
-        last_folders, last_seq = get_last_sequence_folder()
-        if last_folders:
-            zip_path = f"Pedidos_Sugeridos/PEDIDOS_{last_seq}.zip"
+            last_folders, last_seq = get_last_sequence_folder()
+            if last_folders:
+                zip_path = f"Pedidos_Sugeridos/PEDIDOS_{last_seq}.zip"
 
-            # Crear ZIP y actualizar historial
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for folder in last_folders:
-                    for root, dirs, files in os.walk(folder):
-                        for file in files:
-                            file_path = os.path.join(root, file)
-                            arcname = os.path.relpath(file_path, "Pedidos_Sugeridos")
-                            zipf.write(file_path, arcname)
+                with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for folder in last_folders:
+                        for root, dirs, files in os.walk(folder):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, "Pedidos_Sugeridos")
+                                zipf.write(file_path, arcname)
 
-            historial_data = {
-                "usuario": st.session_state.get("usuario", "Desconocido"),
-                "archivo": os.path.basename(zip_path),
-                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+                historial_data = {
+                    "usuario": st.session_state.get("usuario", "Desconocido"),
+                    "archivo": os.path.basename(zip_path),
+                    "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
 
-            with open("Pedidos_Sugeridos/historial.json", "w", encoding="utf-8") as f:
-                json.dump(historial_data, f, ensure_ascii=False, indent=2)
+                with open("Pedidos_Sugeridos/historial.json", "w", encoding="utf-8") as f:
+                    json.dump(historial_data, f, ensure_ascii=False, indent=2)
 
-            # Mostrar resultado
-            with open(zip_path, "rb") as f:
-                zip_b64 = base64.b64encode(f.read()).decode()
-                st.markdown(f"""
-                    <div class='result-box'>
-                        <div style='font-size: 1.6em; font-weight: bold; margin-bottom: 0.5em; color: #FAB803;'>
-                            ✅ Pedido generado correctamente
+                with open(zip_path, "rb") as f:
+                    zip_b64 = base64.b64encode(f.read()).decode()
+                    st.markdown(f"""
+                        <div class='result-box'>
+                            <div style='font-size: 1.6em; font-weight: bold; margin-bottom: 0.5em; color: #FAB803;'>
+                                ✅ Pedido generado correctamente
+                            </div>
+                            <div style='font-size: 1.1em; margin-bottom: 1em;'>
+                                ZIP generado: <b>{os.path.basename(zip_path)}</b><br>
+                                Generado por: <b>{historial_data['usuario']}</b><br>
+                                Fecha: {historial_data['fecha']}
+                            </div>
+                            <a download="{historial_data['archivo']}"
+                               href="data:application/zip;base64,{zip_b64}">
+                                <button style='
+                                    background-color:#FAB803;
+                                    color:#181818;
+                                    font-weight:bold;
+                                    padding:0.6em 1.5em;
+                                    border:none;
+                                    border-radius:6px;
+                                    font-size:1em;
+                                    cursor:pointer;
+                                    width: auto;
+                                '>
+                                    Descargar ZIP General
+                                </button>
+                            </a>
                         </div>
-                        <div style='font-size: 1.1em; margin-bottom: 1em;'>
-                            ZIP generado: <b>{os.path.basename(zip_path)}</b><br>
-                            Generado por: <b>{historial_data['usuario']}</b><br>
-                            Fecha: {historial_data['fecha']}
+                    """, unsafe_allow_html=True)
+
+                # Crear ZIP solo con medicamentos
+                medicamentos_dir = os.path.join("Pedidos_Sugeridos", "medicamentos")
+                zip_medicamentos_path = f"Pedidos_Sugeridos/MEDICAMENTOS_{last_seq}.zip"
+
+                if os.path.exists(medicamentos_dir):
+                    with zipfile.ZipFile(zip_medicamentos_path, 'w', zipfile.ZIP_DEFLATED) as zipf_med:
+                        for root, dirs, files in os.walk(medicamentos_dir):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, "Pedidos_Sugeridos")
+                                zipf_med.write(file_path, arcname)
+
+                    with open(zip_medicamentos_path, "rb") as f_med:
+                        zip_med_b64 = base64.b64encode(f_med.read()).decode()
+
+                    st.markdown(f"""
+                        <div class='result-box' style='margin-top: 1em;'>
+                            <div style='font-size: 1.4em; font-weight: bold; margin-bottom: 0.5em; color: #FAB803;'>
+                                💊 Pedido Farmacia (Medicamentos) generado correctamente
+                            </div>
+                            <a download="MEDICAMENTOS_{last_seq}.zip"
+                               href="data:application/zip;base64,{zip_med_b64}">
+                                <button style='
+                                    background-color:#FAB803;
+                                    color:#181818;
+                                    font-weight:bold;
+                                    padding:0.6em 1.5em;
+                                    border:none;
+                                    border-radius:6px;
+                                    font-size:1em;
+                                    cursor:pointer;
+                                    width: auto;
+                                '>
+                                    Descargar ZIP Farmacia
+                                </button>
+                            </a>
                         </div>
-                        <a download="{historial_data['archivo']}"
-                           href="data:application/zip;base64,{zip_b64}">
-                            <button style='
-                                background-color:#FAB803;
-                                color:#181818;
-                                font-weight:bold;
-                                padding:0.6em 1.5em;
-                                border:none;
-                                border-radius:6px;
-                                font-size:1em;
-                                cursor:pointer;
-                                width: auto;
-                            '>
-                                Descargar ZIP
-                            </button>
-                        </a>
-                    </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+
     except Exception as e:
         st.error(f"Error al generar los pedidos: {str(e)}")
         st.session_state['run'] = False
-        st.rerun()
+        st.experimental_rerun()
 
 # ---------- FOOTER ----------
 st.markdown("""
     <hr>
     <div style='text-align:center; color:#FAB803; padding: 1em;'>
-        Desarrollado para Black Dog Panamá &copy; 2024
+        Desarrollado para Black Dog Panamá &copy; 2025
     </div>
 """, unsafe_allow_html=True)
