@@ -518,12 +518,11 @@ elif st.session_state['run']:
     except Exception as e:
         st.error(f"Error al generar los pedidos: {str(e)}")
         st.session_state['run'] = False
-        st.experimental_rerun()
 
 # ---------- FOOTER ----------
 st.markdown("""
     <hr>
     <div style='text-align:center; color:#FAB803; padding: 1em;'>
-        Desarrollado para Black Dog Panamá &copy; 2025
+        Desarrollado para Black Dog Panamá &copy; 2024
     </div>
 """, unsafe_allow_html=True)
