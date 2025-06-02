@@ -31,6 +31,13 @@ def guardar_configuracion(config, path=CONFIG_PATH):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
+# Función segura para recargar la app sin error
+def safe_rerun():
+    try:
+        st.experimental_rerun()
+    except Exception:
+        pass
+
 # ---------- ESTILOS CSS ----------
 st.markdown("""
     <style>
@@ -273,7 +280,7 @@ def cerrar_sesion():
     if not st.session_state['confirmar_cierre']:
         if st.button("Cerrar sesión", key="logout_button"):
             st.session_state['confirmar_cierre'] = True
-            st.experimental_rerun()
+            safe_rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state['confirmar_cierre']:
@@ -282,11 +289,11 @@ def cerrar_sesion():
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
-                st.experimental_rerun()
+                safe_rerun()
         with col2:
             if st.button("No, cancelar", key="cancel_logout"):
                 st.session_state['confirmar_cierre'] = False
-                st.experimental_rerun()
+                safe_rerun()
 
 # ---------- INICIALIZACIÓN DE ESTADO ----------
 if 'logueado' not in st.session_state:
@@ -325,7 +332,7 @@ if not st.session_state.get('logueado', False) or (
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
-                st.experimental_rerun()
+                safe_rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
     st.stop()
@@ -391,7 +398,7 @@ if not st.session_state['confirmado'] and not st.session_state['run']:
     with col2:
         if st.button("Generar Pedidos"):
             st.session_state['confirmado'] = True
-            st.experimental_rerun()
+            safe_rerun()
 
 elif st.session_state['confirmado'] and not st.session_state['run']:
     st.markdown("""
@@ -405,11 +412,11 @@ elif st.session_state['confirmado'] and not st.session_state['run']:
         if st.button("✅ Confirmar", key="confirm"):
             st.session_state['run'] = True
             st.session_state['confirmado'] = False
-            st.experimental_rerun()
+            safe_rerun()
     with col2:
         if st.button("❌ Cancelar", key="cancel"):
             st.session_state['confirmado'] = False
-            st.experimental_rerun()
+            safe_rerun()
 
 elif st.session_state['run']:
     try:
