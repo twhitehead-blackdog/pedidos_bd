@@ -1,0 +1,69 @@
+{
+  "meses_inventario": {
+    "general": 1,
+    "categorias": {
+      "natural greatness": {
+        "regular": 1.0,
+        "chica": 1.0
+      },
+      "gosbi": {
+        "regular": 0.75,
+        "chica": 0.75
+      }
+    }
+  },
+  "minimos_alimentos": {
+    "regular": 1,
+    "chica": 1
+  },
+  "minimos_accesorios": {
+    "regular": {
+      "bowls y feeders": 2,
+      "camas": 1,
+      "kennel": 1,
+      "gimnasios y rascadores": 1,
+      "higiene/pampers": 10,
+      "higiene/bolsas de pupu": 10,
+      "higiene/shampoo": 6,
+      "higiene/topicos - cremas, perfume": 6,
+      "higiene/pads": 10,
+      "higiene/dental": 6,
+      "higiene/wipes": 6,
+      "higiene/cepillos": 6,
+      "higiene/otros": 6,
+      "higiene/hogar": 4,
+      "higiene/gatos - arenero": 1,
+      "juguetes": 6,
+      "medias": 6,
+      "pecheras/correas/leashes": 4,
+      "bolsos": 2,
+      "arena": 6,
+      "carritos": 1,
+      "default": 3
+    },
+    "chica": {
+      "bowls y feeders": 2,
+      "camas": 0,
+      "kennel": 0,
+      "gimnasios y rascadores": 0,
+      "higiene/pampers": 5,
+      "higiene/bolsas de pupu": 5,
+      "higiene/shampoo": 5,
+      "higiene/topicos - cremas, perfume": 5,
+      "higiene/pads": 5,
+      "higiene/dental": 5,
+      "higiene/wipes": 5,
+      "higiene/cepillos": 5,
+      "higiene/otros": 5,
+      "higiene/hogar": 3,
+      "higiene/gatos - arenero": 1,
+      "juguetes": 5,
+      "medias": 5,
+      "pecheras/correas/leashes": 2,
+      "bolsos": 0,
+      "arena": 2,
+      "carritos": 0,
+      "default": 1
+    }
+  }
+}
