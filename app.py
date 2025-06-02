@@ -178,20 +178,42 @@ mostrar_tiempo_sesion()
 # Sidebar para configuración editable
 st.sidebar.header("Configuración de Pedidos")
 
+# Obtener valor seguro para meses inventario general
+meses_general_raw = st.session_state.config.get("meses_inventario", {}).get("general", 1.0)
+try:
+    meses_general = float(meses_general_raw)
+except (TypeError, ValueError):
+    meses_general = 1.0
+
 meses_general = st.sidebar.number_input(
     "Meses inventario general",
     min_value=0.1, max_value=12.0,
-    value=st.session_state.config.get("meses_inventario", {}).get("general", 1.0),
+    value=meses_general,
     step=0.1
 )
 
-categorias_json = json.dumps(st.session_state.config.get("meses_inventario", {}).get("categorias", {}), indent=2)
+# Cargar JSON para categorías, con fallback a string JSON válido
+categorias_obj = st.session_state.config.get("meses_inventario", {}).get("categorias", {})
+try:
+    categorias_json = json.dumps(categorias_obj, indent=2)
+except Exception:
+    categorias_json = "{}"
 categorias_edit = st.sidebar.text_area("Meses inventario por categoría (JSON)", categorias_json, height=200)
 
-minimos_alimentos_json = json.dumps(st.session_state.config.get("minimos_alimentos", {}), indent=2)
+# Mínimos alimentos
+minimos_alimentos_obj = st.session_state.config.get("minimos_alimentos", {})
+try:
+    minimos_alimentos_json = json.dumps(minimos_alimentos_obj, indent=2)
+except Exception:
+    minimos_alimentos_json = "{}"
 minimos_alimentos_edit = st.sidebar.text_area("Mínimos alimentos (JSON)", minimos_alimentos_json, height=150)
 
-minimos_accesorios_json = json.dumps(st.session_state.config.get("minimos_accesorios", {}), indent=2)
+# Mínimos accesorios
+minimos_accesorios_obj = st.session_state.config.get("minimos_accesorios", {})
+try:
+    minimos_accesorios_json = json.dumps(minimos_accesorios_obj, indent=2)
+except Exception:
+    minimos_accesorios_json = "{}"
 minimos_accesorios_edit = st.sidebar.text_area("Mínimos accesorios (JSON)", minimos_accesorios_json, height=300)
 
 if st.sidebar.button("Guardar configuración"):
