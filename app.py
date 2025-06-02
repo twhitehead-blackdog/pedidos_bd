@@ -16,12 +16,6 @@ st.set_page_config(
 CONFIG_PATH = "config_ajustes.json"
 USUARIOS_VALIDOS = st.secrets["usuarios"]
 
-def safe_rerun():
-    try:
-        st.experimental_rerun()
-    except Exception:
-        pass
-
 def cargar_configuracion(path=CONFIG_PATH):
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
@@ -103,7 +97,6 @@ def cerrar_sesion():
     if not st.session_state['confirmar_cierre']:
         if st.button("Cerrar sesión", key="logout_button"):
             st.session_state['confirmar_cierre'] = True
-            safe_rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.session_state['confirmar_cierre']:
@@ -112,11 +105,9 @@ def cerrar_sesion():
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
-                safe_rerun()
         with col2:
             if st.button("No, cancelar", key="cancel_logout"):
                 st.session_state['confirmar_cierre'] = False
-                safe_rerun()
 
 # Inicialización estado
 if 'logueado' not in st.session_state:
@@ -155,7 +146,7 @@ if not st.session_state.get('logueado', False) or (
                 st.session_state['usuario'] = usuario
                 st.session_state['nombre_completo'] = USUARIOS_VALIDOS[usuario]["nombre"]
                 st.session_state['login_time'] = datetime.now()
-                safe_rerun()
+                st.experimental_rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
     st.stop()
@@ -181,7 +172,6 @@ with col1:
         meses_general = max(0.1, meses_general - 0.1)
         st.session_state.config["meses_inventario"]["general"] = round(meses_general, 2)
         guardar_configuracion(st.session_state.config)
-        safe_rerun()
 with col2:
     st.markdown(f"<h3 style='text-align:center; margin:0;'>{meses_general:.1f}</h3>", unsafe_allow_html=True)
 with col3:
@@ -189,7 +179,6 @@ with col3:
         meses_general = min(12.0, meses_general + 0.1)
         st.session_state.config["meses_inventario"]["general"] = round(meses_general, 2)
         guardar_configuracion(st.session_state.config)
-        safe_rerun()
 
 # Mostrar logo y título principal
 show_centered_logo("logo.png")
@@ -204,7 +193,6 @@ if not st.session_state['confirmado'] and not st.session_state['run']:
     with col2:
         if st.button("Generar Pedidos"):
             st.session_state['confirmado'] = True
-            safe_rerun()
 
 elif st.session_state['confirmado'] and not st.session_state['run']:
     st.markdown("""
@@ -218,11 +206,9 @@ elif st.session_state['confirmado'] and not st.session_state['run']:
         if st.button("✅ Confirmar", key="confirm"):
             st.session_state['run'] = True
             st.session_state['confirmado'] = False
-            safe_rerun()
     with col2:
         if st.button("❌ Cancelar", key="cancel"):
             st.session_state['confirmado'] = False
-            safe_rerun()
 
 elif st.session_state['run']:
     try:
@@ -306,7 +292,7 @@ elif st.session_state['run']:
                         </div>
                     """, unsafe_allow_html=True)
 
-            st.session_state['run'] = False  # Reset para permitir nueva generación
+            st.session_state['run'] = False  # Permitir nueva generación
 
     except Exception as e:
         st.error(f"Error al generar los pedidos: {str(e)}")
