@@ -6,12 +6,7 @@ import json
 from datetime import datetime, timedelta
 from generar import procesar_pedidos_odoo
 
-# Configuración de la página
-st.set_page_config(
-    page_title="Pedidos Sugeridos Black Dog",
-    page_icon="favicon.png",
-    layout="centered"
-)
+st.set_page_config(page_title="Pedidos Sugeridos Black Dog", page_icon="favicon.png", layout="centered")
 
 CONFIG_PATH = "config_ajustes.json"
 USUARIOS_VALIDOS = st.secrets["usuarios"]
@@ -31,12 +26,7 @@ def show_centered_logo(path="logo.png", width=220):
     if os.path.exists(path):
         with open(path, "rb") as image_file:
             encoded = base64.b64encode(image_file.read()).decode()
-        st.markdown(
-            f"<div style='text-align:center; margin-bottom:1.5em;'>"
-            f"<img src='data:image/png;base64,{encoded}' width='{width}'>"
-            f"</div>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"<div style='text-align:center; margin-bottom:1.5em;'><img src='data:image/png;base64,{encoded}' width='{width}'></div>", unsafe_allow_html=True)
 
 def get_last_sequence_folder(base_dir="Pedidos_Sugeridos"):
     if not os.path.exists(base_dir):
@@ -83,11 +73,7 @@ def mostrar_tiempo_sesion():
         tiempo_restante = timedelta(minutes=30) - tiempo_transcurrido
         minutos_restantes = int(tiempo_restante.total_seconds() / 60)
         if minutos_restantes > 0:
-            st.markdown(f"""
-                <div style='text-align:center; font-size:0.9em; color:#888; margin-bottom:1em;'>
-                    Tiempo restante de sesión: {minutos_restantes} minutos
-                </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"<div style='text-align:center; font-size:0.9em; color:#888; margin-bottom:1em;'>Tiempo restante de sesión: {minutos_restantes} minutos</div>", unsafe_allow_html=True)
 
 def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
@@ -105,6 +91,7 @@ def cerrar_sesion():
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
+                st.experimental_rerun()
         with col2:
             if st.button("No, cancelar", key="cancel_logout"):
                 st.session_state['confirmar_cierre'] = False
@@ -126,10 +113,7 @@ if 'config' not in st.session_state:
     st.session_state['config'] = cargar_configuracion()
 
 # Login y expiración
-if not st.session_state.get('logueado', False) or (
-    st.session_state.get('login_time') and
-    datetime.now() - st.session_state['login_time'] > timedelta(minutes=30)
-):
+if not st.session_state['logueado'] or (st.session_state['login_time'] and datetime.now() - st.session_state['login_time'] > timedelta(minutes=30)):
     st.session_state['logueado'] = False
     show_centered_logo("logo.png")
     st.markdown("<h1 style='text-align:center; color:#FAB803;'>Pedidos Black Dog</h1>", unsafe_allow_html=True)
@@ -218,10 +202,8 @@ elif st.session_state['run']:
             st.session_state['run'] = False
         else:
             meses_inventario = config.get("meses_inventario", {}).get("general", 1)
-            col1, col2, col3 = st.columns([1,2,1])
-            with col2:
-                with st.spinner("Generando pedidos sugeridos..."):
-                    procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos", meses_inventario=meses_inventario, config=config)
+            with st.spinner("Generando pedidos sugeridos..."):
+                procesar_pedidos_odoo(output_dir="Pedidos_Sugeridos", meses_inventario=meses_inventario, config=config)
 
             last_folders, last_seq = get_last_sequence_folder()
             if last_folders:
@@ -292,16 +274,10 @@ elif st.session_state['run']:
                         </div>
                     """, unsafe_allow_html=True)
 
-            st.session_state['run'] = False  # Permitir nueva generación
+            st.session_state['run'] = False
 
     except Exception as e:
         st.error(f"Error al generar los pedidos: {str(e)}")
         st.session_state['run'] = False
 
-# Footer
-st.markdown("""
-    <hr>
-    <div style='text-align:center; color:#FAB803; padding:1em;'>
-        Desarrollado para Black Dog Panamá &copy; 2024
-    </div>
-""", unsafe_allow_html=True)
+st.markdown("<hr><div style='text-align:center; color:#FAB803; padding:1em;'>Desarrollado para Black Dog Panamá &copy; 2024</div>", unsafe_allow_html=True)
