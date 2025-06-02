@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 from generar import procesar_pedidos_odoo
 
+# Configuración de la página
 st.set_page_config(page_title="Pedidos Sugeridos Black Dog", page_icon="favicon.png", layout="centered")
 
 CONFIG_PATH = "config_ajustes.json"
