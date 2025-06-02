@@ -27,7 +27,6 @@ def cargar_configuracion(path=CONFIG_PATH):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     else:
-        # Config default
         return {"meses_inventario": {"general": 1.0}}
 
 def guardar_configuracion(config, path=CONFIG_PATH):
@@ -109,7 +108,7 @@ def cerrar_sesion():
 
     if st.session_state['confirmar_cierre']:
         st.warning("¿Estás seguro de que deseas cerrar sesión?")
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2, gap="large")
         with col1:
             if st.button("Sí, cerrar sesión", key="confirm_logout"):
                 st.session_state.clear()
@@ -166,19 +165,17 @@ st.markdown(f"<h2 style='text-align:center; color:#FAB803;'>👋 Bienvenido, {st
 cerrar_sesion()
 mostrar_tiempo_sesion()
 
-# Sidebar: solo control numérico con botones + y -
+# Sidebar: control numérico con botones + y -
 st.sidebar.header("Configuración de Pedidos")
 
-# Obtener valor actual y asegurar float
 meses_general_raw = st.session_state.config.get("meses_inventario", {}).get("general", 1.0)
 try:
     meses_general = float(meses_general_raw)
 except (TypeError, ValueError):
     meses_general = 1.0
 
-# Mostrar valor y botones para ajustar
 st.sidebar.markdown("### Meses inventario general")
-col1, col2, col3 = st.sidebar.columns([1,2,1])
+col1, col2, col3 = st.sidebar.columns([1,2,1], gap="small")
 with col1:
     if st.button("-", key="menos_meses"):
         meses_general = max(0.1, meses_general - 0.1)
@@ -216,7 +213,7 @@ elif st.session_state['confirmado'] and not st.session_state['run']:
         </div>
     """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="large")
     with col1:
         if st.button("✅ Confirmar", key="confirm"):
             st.session_state['run'] = True
@@ -308,6 +305,8 @@ elif st.session_state['run']:
                             </a>
                         </div>
                     """, unsafe_allow_html=True)
+
+            st.session_state['run'] = False  # Reset para permitir nueva generación
 
     except Exception as e:
         st.error(f"Error al generar los pedidos: {str(e)}")
