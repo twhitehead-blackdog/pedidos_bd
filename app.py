@@ -14,31 +14,26 @@ st.set_page_config(
 )
 
 CONFIG_PATH = "config_ajustes.json"
-
-# Usuarios válidos desde secrets.toml
 USUARIOS_VALIDOS = st.secrets["usuarios"]
 
-# Función segura para recargar la app sin error
 def safe_rerun():
     try:
         st.experimental_rerun()
     except Exception:
         pass
 
-# Cargar configuración desde archivo JSON
 def cargar_configuracion(path=CONFIG_PATH):
     if os.path.exists(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     else:
-        return {}
+        # Config default
+        return {"meses_inventario": {"general": 1.0}}
 
-# Guardar configuración en archivo JSON
 def guardar_configuracion(config, path=CONFIG_PATH):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
-# Mostrar logo centrado
 def show_centered_logo(path="logo.png", width=220):
     if os.path.exists(path):
         with open(path, "rb") as image_file:
@@ -50,7 +45,6 @@ def show_centered_logo(path="logo.png", width=220):
             unsafe_allow_html=True
         )
 
-# Obtener última carpeta de pedido generada
 def get_last_sequence_folder(base_dir="Pedidos_Sugeridos"):
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
@@ -63,7 +57,6 @@ def get_last_sequence_folder(base_dir="Pedidos_Sugeridos"):
     last_folders = [f for f in folders if f.endswith(f"PEDIDO_" + last_seq)]
     return last_folders, last_seq
 
-# Mostrar historial de último pedido generado
 def mostrar_historial():
     historial_path = "Pedidos_Sugeridos/historial.json"
     if os.path.exists(historial_path):
@@ -91,7 +84,6 @@ def mostrar_historial():
                         </div>
                     """, unsafe_allow_html=True)
 
-# Mostrar tiempo restante de sesión
 def mostrar_tiempo_sesion():
     if st.session_state.get('login_time'):
         tiempo_transcurrido = datetime.now() - st.session_state['login_time']
@@ -104,7 +96,6 @@ def mostrar_tiempo_sesion():
                 </div>
             """, unsafe_allow_html=True)
 
-# Manejo de cierre de sesión con confirmación
 def cerrar_sesion():
     if 'confirmar_cierre' not in st.session_state:
         st.session_state['confirmar_cierre'] = False
@@ -128,7 +119,7 @@ def cerrar_sesion():
                 st.session_state['confirmar_cierre'] = False
                 safe_rerun()
 
-# Inicialización de variables de sesión
+# Inicialización estado
 if 'logueado' not in st.session_state:
     st.session_state['logueado'] = False
 if 'login_time' not in st.session_state:
@@ -144,7 +135,7 @@ if 'nombre_completo' not in st.session_state:
 if 'config' not in st.session_state:
     st.session_state['config'] = cargar_configuracion()
 
-# Login y control de sesión
+# Login y expiración
 if not st.session_state.get('logueado', False) or (
     st.session_state.get('login_time') and
     datetime.now() - st.session_state['login_time'] > timedelta(minutes=30)
@@ -170,72 +161,38 @@ if not st.session_state.get('logueado', False) or (
                 st.error("Usuario o contraseña incorrectos")
     st.stop()
 
-# Mostrar bienvenida y logout
+# Bienvenida y logout
 st.markdown(f"<h2 style='text-align:center; color:#FAB803;'>👋 Bienvenido, {st.session_state['nombre_completo']}.</h2>", unsafe_allow_html=True)
 cerrar_sesion()
 mostrar_tiempo_sesion()
 
-# Sidebar para configuración editable
+# Sidebar: solo control numérico con botones + y -
 st.sidebar.header("Configuración de Pedidos")
 
-# Obtener valor seguro para meses inventario general
+# Obtener valor actual y asegurar float
 meses_general_raw = st.session_state.config.get("meses_inventario", {}).get("general", 1.0)
 try:
     meses_general = float(meses_general_raw)
 except (TypeError, ValueError):
     meses_general = 1.0
 
-meses_general = st.sidebar.number_input(
-    "Meses inventario general",
-    min_value=0.1, max_value=12.0,
-    value=meses_general,
-    step=0.1
-)
-
-# Cargar JSON para categorías, con fallback a string JSON válido
-categorias_obj = st.session_state.config.get("meses_inventario", {}).get("categorias", {})
-try:
-    categorias_json = json.dumps(categorias_obj, indent=2)
-except Exception:
-    categorias_json = "{}"
-categorias_edit = st.sidebar.text_area("Meses inventario por categoría (JSON)", categorias_json, height=200)
-
-# Mínimos alimentos
-minimos_alimentos_obj = st.session_state.config.get("minimos_alimentos", {})
-try:
-    minimos_alimentos_json = json.dumps(minimos_alimentos_obj, indent=2)
-except Exception:
-    minimos_alimentos_json = "{}"
-minimos_alimentos_edit = st.sidebar.text_area("Mínimos alimentos (JSON)", minimos_alimentos_json, height=150)
-
-# Mínimos accesorios
-minimos_accesorios_obj = st.session_state.config.get("minimos_accesorios", {})
-try:
-    minimos_accesorios_json = json.dumps(minimos_accesorios_obj, indent=2)
-except Exception:
-    minimos_accesorios_json = "{}"
-minimos_accesorios_edit = st.sidebar.text_area("Mínimos accesorios (JSON)", minimos_accesorios_json, height=300)
-
-if st.sidebar.button("Guardar configuración"):
-    try:
-        categorias_dict = json.loads(categorias_edit)
-        minimos_alimentos_dict = json.loads(minimos_alimentos_edit)
-        minimos_accesorios_dict = json.loads(minimos_accesorios_edit)
-
-        nueva_config = {
-            "meses_inventario": {
-                "general": meses_general,
-                "categorias": categorias_dict
-            },
-            "minimos_alimentos": minimos_alimentos_dict,
-            "minimos_accesorios": minimos_accesorios_dict
-        }
-
-        st.session_state.config = nueva_config
-        guardar_configuracion(nueva_config)
-        st.sidebar.success("Configuración guardada correctamente.")
-    except Exception as e:
-        st.sidebar.error(f"Error guardando configuración: {e}")
+# Mostrar valor y botones para ajustar
+st.sidebar.markdown("### Meses inventario general")
+col1, col2, col3 = st.sidebar.columns([1,2,1])
+with col1:
+    if st.button("-", key="menos_meses"):
+        meses_general = max(0.1, meses_general - 0.1)
+        st.session_state.config["meses_inventario"]["general"] = round(meses_general, 2)
+        guardar_configuracion(st.session_state.config)
+        safe_rerun()
+with col2:
+    st.markdown(f"<h3 style='text-align:center; margin:0;'>{meses_general:.1f}</h3>", unsafe_allow_html=True)
+with col3:
+    if st.button("+", key="mas_meses"):
+        meses_general = min(12.0, meses_general + 0.1)
+        st.session_state.config["meses_inventario"]["general"] = round(meses_general, 2)
+        guardar_configuracion(st.session_state.config)
+        safe_rerun()
 
 # Mostrar logo y título principal
 show_centered_logo("logo.png")
